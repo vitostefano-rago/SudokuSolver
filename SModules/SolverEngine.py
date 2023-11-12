@@ -7,6 +7,20 @@ sudoku = [[0 for _ in range(cols)] for _ in range(rows)]
 gl = []
 ccn = 0
 
+class SavedStatus():
+	def __init__(self, sdk, row, col, vn):
+		self.sdk = sdk
+		self.row = row
+		self.col = col
+		self.vn = vn
+
+class SudokuTransmit():
+	def __init__(self, sdk, sz, dv):
+		self.sdk = sdk
+		self.sz = sz
+		self.dv = dv
+
+
 def CoherencyCheck(sdk):
 	global div
 	global rows
@@ -220,7 +234,6 @@ def EliminateSolutions(fv):
 								#If present, eliminate possible solution from all cells in the row that are not in the subrectangle
 								fv[cntrr][div[0]*co + cs.index(max(cs))] = fv[cntrr][div[0]*co + cs.index(max(cs))].difference({cnt})
 								doing = 1
-	#print(fv)
 	return fv
 
 
@@ -232,56 +245,25 @@ def HardSolution(fv):
 	return t
 
 
+#Number of possible solutions in each cell
 def GetPosSol(fv):
 	global rows
 	global cols
 	global div
+	global sudoku
+	
+	#Very high value means there is already a value in the given cell
 	sols = [[10000000 for _ in range(cols)] for _ in range(rows)]
 	for cntr in range(rows):
 		for cntc in range(cols):
+			#At least one solution can be fit in the given cell
 			if len(fv[cntr][cntc]) != 0:
 				sols[cntr][cntc] = len(fv[cntr][cntc])
+			#No solutions can be fit into an empty cell
+			elif sudoku[cntr][cntc] == 0:
+				sols[cntr][cntc] = -1
 	return sols
 
-
-def GetOrder(fv):
-	global cols
-	global rows
-	global div
-	sols = [[1 for _ in range(cols)] for _ in range(rows)]
-	rs = [1 for _ in range(rows)]
-	cs = [1 for _ in range(cols)]
-	rh = 1
-	for cntr in range(rows):
-		for cntc in range(cols):
-			tmp = len(fv[cntr][cntc])
-			if tmp != 0:
-				sols[cntr][cntc] = tmp
-				rs[cntr] = rs[cntr] * tmp
-				cs[cntc] = cs[cntc] * tmp
-	if div[0] > div[1]:
-		pass
-	elif div[1] > div[0]:
-		pass
-	else:
-		pass
-	print(sols)
-	print(rs)
-	print(cs)
-
-
-class SavedStatus():
-	def __init__(self, sdk, row, col, vn):
-		self.sdk = sdk
-		self.row = row
-		self.col = col
-		self.vn = vn
-
-class SudokuTransmit():
-	def __init__(self, sdk, sz, dv):
-		self.sdk = sdk
-		self.sz = sz
-		self.dv = dv
 
 def GuessManager(sv):
 	global sudoku
@@ -307,7 +289,7 @@ def GuessManager(sv):
 					return 1
 	
 	#Case algorithm got stuck, needs to go back.
-	if mv == 0 or mv > 999999 or CoherencyCheck(sudoku) != 1:
+	if mv == -1 or mv > 999999 or CoherencyCheck(sudoku) != 1:
 		while True:
 			if len(gl) > 0:
 				lst = gl.pop()
